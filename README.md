@@ -39,7 +39,7 @@
 
 Ход работы:
 ### Задание 1
-- В облачном сервисе google console подключил API для работы с google sheets и google drive
+- В облачном сервисе google console подключил API для работы с google sheets и google drive(скриншот 1)
 - Релизовал запись данных из скрипта на python в google-таблицу, данные которой описывают изменение темпа инфляции на протяжении 10 отчетных периодов с учетом стоимости игрового объекта в каждый период
 
 ```py
@@ -64,7 +64,7 @@ while i <= len(mon):
         print(tempInf)
 ```
 
-- Создал проект в Unity, который получал данные из google-таблицы, в которую были записаны данные в предыдущем пункте
+- Создал проект в Unity, который получал данные из google-таблицы, в которую были записаны данные в предыдущем пункте(скриншон 2)
 - Написал функционал на Unity, в котором воспроизводился аудио-файл в зависимости от значения данных из таблицы
 
 ```cs
@@ -142,11 +142,115 @@ public class NewBehaviourScript : MonoBehaviour
 ```
 
 ### Задание 2
+Добавил функцию линейной регрессии в инициализацию данных в таблицу
+
+```py
+import gspread
+import inline as inline
+import matplotlib
+import numpy as np
+import matplotlib.pyplot as plt
+gc = gspread.service_account(filename="unitylabadatasciense-792809ea8ff5.json")
+sh = gc.open("UnityLabaDataSCienseSheets")
+priceX = np.random.randint(2000, 10000, 11)
+priceX = np.array(priceX)
+priceY = np.random.randint(2000, 10000, 11)
+priceY = np.array(priceY)
+mon = list(range(1, 11))
+
+
+a = np.random.rand(1)
+print(a)
+b = np.random.rand(1)
+print(b)
+Lr = 0.000001
+
+
+def model(a, b, x):
+  return a * x + b
+
+
+def loss_function(a, b, x, y):
+  num = len(x)
+  prediction = model(a, b, x)
+  return (0.5 / num) * (np.square(prediction - y)).sum()
+
+
+def optimize(a, b, x, y):
+  num = len(x)
+  prediction = model(a, b, x)
+  da = (1.0 / num) * ((prediction - y) * x).sum()
+  db = (1.0 / num) * (prediction - y).sum()
+  a = a - Lr * da
+  b = b - Lr * db
+  return a, b
+
+def iterate (a, b, x, y, times):
+  for i in range(times):
+    a, b = optimize(a, b, x, y)
+  return a, b
+
+
+a, b = iterate(a, b, priceX, priceY, 1)
+prediction = model(a, b, priceX)
+loss = loss_function(a, b, priceX, priceY)
+print(a, b, loss)
+plt.scatter(x,y)
+plt.plot(x,prediction)
+
+
+i = 0
+while i <= len(mon):
+    i += 1
+    if i == 0:
+        continue
+    else:
+        tempInf = ((prediction[i-1]-prediction[i-2])/prediction[i-2])*100
+        tempInf = str(tempInf)
+        tempInf = tempInf.replace('.', ',')
+        sh.sheet1.update(('A' + str(i)), str(i))
+        sh.sheet1.update(('B' + str(i)), str(prediction[i-1]//1))
+        sh.sheet1.update(('C' + str(i)), str(tempInf))
+        print(prediction)
+```
+
 
 ### Задание 3
+- написал функцию проверки уровня инфляции, добавил новые сценарии, зависящие от уровня инфляции
+
+```cs
+void Update()
+    {
+        if (CheckInflation(int.MinValue, 10))
+        {
+            StartCoroutine(PlaySelectAudioMode(GoodSpeak));
+            Debug.Log(dataSet["Mon_" + i.ToString()]);
+        }
+
+        if (CheckInflation(10, 100))
+        {
+            StartCoroutine(PlaySelectAudioMode(NormalSpeak));
+            Debug.Log(dataSet["Mon_" + i.ToString()]);
+        }
+
+        if (CheckInflation(100, int.MaxValue))
+        {
+            StartCoroutine(PlaySelectAudioMode(BadSpeak));
+            Debug.Log(dataSet["Mon_" + i.ToString()]);
+        }
+    }
+
+    bool CheckInflation(int min, int max)
+    {
+        return dataSet["Mon_" + i.ToString()] >= min &
+            dataSet["Mon_" + i.ToString()] <= max &
+            statusStart == false &
+            i != dataSet.Count;
+    }
+```
 
 ## Выводы
-В ходе работы ознакомился с основами языка Python, работы с его операторами, разобрался в использовании линейной регрессии, рассмотрел зависимости её значений от различных параметров.
+В ходе работы ознакомился с работой сервисов google console API, google-таблиц. Смоделировал изменение цены на товар и инфляцию, исходя из разницы цен в разные промежутки итерации. Создал в Unity скрипт, который в зависимости от принимаемых значений инфляции выдает не только её текущий показатель, но и звуковой эффект-отчет.
 
 ## Приложение
 ### Основная литература:
